@@ -1,45 +1,32 @@
-const express = require("express");
+import express from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import http from "http";
+import mongoose from "mongoose";
+import "dotenv/config";
+import routes from "./src/routes/index.js";
+
 const app = express();
 
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-
-const config = require("./config/key");
-
-const mongoose = require("mongoose");
-const connect = mongoose
-  .connect(config.mongoURI, { useNewUrlParser: true })
-  .then(() => console.log("MongoDB connected..."))
-  .catch((err) => console.log(err));
-
-app.use(bodyParser.urlencoded({ extended: true }));
-//to get json data
-// support parsing of application/json type post data
-app.use(bodyParser.json());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use("/api/users", require("./routes/users"));
-app.use("/api/comment", require("./routes/comment"));
-app.use("/api/like", require("./routes/like"));
-app.use("/api/favorite", require("./routes/favorite"));
-
-//use this to show the image you have in node js server to client (react js)
-//https://stackoverflow.com/questions/48914987/send-image-path-from-node-js-express-server-to-react-client
-app.use("/uploads", express.static("uploads"));
-
-// Serve static assets if in production
-if (process.env.NODE_ENV === "production") {
-  // Set static folder
-  app.use(express.static("client/build"));
-
-  // index.html for all page routes    html or routing and navigation
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
-  });
-}
+app.use("/api/v1", routes);
 
 const port = process.env.PORT || 5000;
 
-app.listen(port, () => {
-  console.log(`Server Running at ${port}`);
+const server = http.createServer(app);
+
+mongoose.connect(process.env.MONGODB_URL).then(() => {
+  console.log("Mongodb connected");
+  server.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+  });
+}).catch((err) => {
+  console.log({ err });
+  process.exit(1);
 });
+
+//test
